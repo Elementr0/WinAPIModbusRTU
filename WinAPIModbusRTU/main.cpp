@@ -77,6 +77,11 @@ LRESULT CALLBACK  SoftwareMainPRocedure(HWND hWnd, UINT msg, WPARAM wp, LPARAM l
 			}
 			addLineToConsole("Подключино");
 			addHRToConsole();
+
+			EnableWindow(ReadCoilsValueAddres, TRUE);
+			EnableWindow(ReadCoilsValueCount, TRUE);
+			EnableWindow(addReadCoilsButton, TRUE);
+
 			break;
 		}
 		case OnClickedDisconnect:
@@ -87,6 +92,13 @@ LRESULT CALLBACK  SoftwareMainPRocedure(HWND hWnd, UINT msg, WPARAM wp, LPARAM l
 			EnableWindow(disconnectButton, FALSE);
 			addLineToConsole("Отключино");
 			addHRToConsole();
+
+
+			EnableWindow(ReadCoilsValueAddres, FALSE);
+			EnableWindow(ReadCoilsValueCount, FALSE);
+			EnableWindow(addReadCoilsButton, FALSE);
+
+
 			break;
 
 		case OnClickedSand:
@@ -101,7 +113,24 @@ LRESULT CALLBACK  SoftwareMainPRocedure(HWND hWnd, UINT msg, WPARAM wp, LPARAM l
 
 			int ts;
 			break;
-		default: break;
+
+		case OnClickedReadCoils:
+			addLineToConsole("Функция ReadCoils 0x01");
+			addres = GetDlgItemInt(hWnd, ReadCoilsValueAddresEDIT, NULL, false);
+			count = GetDlgItemInt(hWnd, ReadCoilsValueCountEDIT, NULL, false);
+			auto request = ModbusRTU::createReadCoils(SlaveId, addres, count);
+			addLineToConsole("Запрос: [" + ModbusRTU::toHexString(request) + " ]");
+			std::vector<uint8_t> response{0};
+			if (!modbus.query(request, response, 1000)) { addLineToConsole("Ошибка чтения");  addHRToConsole(); break;};
+			addLineToConsole("Ответ: [" + ModbusRTU::toHexString(response) + " ]");
+			std::vector<bool> coils{ 0 };
+			ModbusRTU::parseReadCoilsResponse(response, coils);
+
+			addLineToConsole("Расшифровка:");
+			addLineToConsole(vectorBoolToCoilsString(coils));
+			addHRToConsole();
+			break;
+
 		}
 		break;
 	case WM_CREATE:
@@ -110,6 +139,11 @@ LRESULT CALLBACK  SoftwareMainPRocedure(HWND hWnd, UINT msg, WPARAM wp, LPARAM l
 		MainWndAddMenus(hWnd);
 		MainWndAddWidgets(hWnd);
 		EnableWindow(disconnectButton, FALSE);
+
+		EnableWindow(ReadCoilsValueAddres, FALSE);
+		EnableWindow(ReadCoilsValueCount, FALSE);
+		EnableWindow(addReadCoilsButton, FALSE);
+
 		SerialUpdate();
 		break;
 		}
@@ -180,7 +214,11 @@ void MainWndAddWidgets(HWND hWnd) {
 	CreateWindowA("static", "|  Скорость:", WS_VISIBLE | WS_CHILD, 170, 35, 200, 30, hWnd, NULL, NULL, NULL);
 
 	CreateWindowA("static", "ReadCoils(x01)", WS_VISIBLE | WS_CHILD, 450, 0, 200, 30, hWnd, NULL, NULL, NULL);
+	addReadCoils(hWnd);
 	CreateCombobox(hWnd);
+
+	readHoldingRegisters(hWnd);
+
 	//CreateGring(hWnd);
 	
 }
@@ -344,15 +382,11 @@ std::string test() {
 
 
 void test2() {
+	auto request = ModbusRTU::createWriteSingleRegister(1, 5, 1234);
 
-	addLineToConsole("Функция ModbusRTU::createReadCoils(1, 0, 8)");
-	auto request = ModbusRTU::createReadCoils(1, 0, 8);
-	addLineToConsole(ModbusRTU::toHexString(request));
 
-	addHRToConsole();
-
-	addLineToConsole("Функция createWriteSingleRegister(1, 5, 1234)");
-	request = ModbusRTU::createWriteSingleRegister(1, 5, 1234);
+	addLineToConsole("Функция createReadRequest(1, 1, 1)");
+	request = ModbusRTU::createReadRequest(1, 1, 1);
 	addLineToConsole(ModbusRTU::toHexString(request));
 
 	addHRToConsole();
@@ -363,6 +397,14 @@ void test2() {
 
 	addHRToConsole();
 
+	addLineToConsole("Функция createWriteSingleRegister(1, 5, 1234)");
+	request = ModbusRTU::createWriteSingleRegister(1, 5, 1234);
+	addLineToConsole(ModbusRTU::toHexString(request));
+
+	addHRToConsole();
+
+
+
 	std::vector<uint16_t> values = { 100, 200, 300, 400 };
 	addLineToConsole("Функция createWriteMultipleRegisters(1, 10, values)");
 	request = ModbusRTU::createWriteMultipleRegisters(1, 10, values);
@@ -370,9 +412,7 @@ void test2() {
 
 	addHRToConsole();
 
-	addLineToConsole("Функция createReadRequest(1, 1, 1)");
-	request = ModbusRTU::createReadRequest(1, 1, 1);
-	addLineToConsole(ModbusRTU::toHexString(request));
+
 }
 
 void CreateGring(HWND hWnd) {
@@ -401,4 +441,41 @@ void CreateGring(HWND hWnd) {
 	CreateWindowA("static", "y600", WS_VISIBLE | WS_CHILD, 0, 600, 200, 20, hWnd, NULL, NULL, NULL);
 	CreateWindowA("static", "y700", WS_VISIBLE | WS_CHILD, 0, 700, 200, 20, hWnd, NULL, NULL, NULL);
 	CreateWindowA("static", "y800", WS_VISIBLE | WS_CHILD, 0, 800, 200, 20, hWnd, NULL, NULL, NULL);
+}
+
+
+void addReadCoils(HWND hWnd) {
+	CreateWindowA("static", "Read Coils(x01)", WS_VISIBLE | WS_CHILD, 450, 0, 120, 30, hWnd, NULL, NULL, NULL);
+	ReadCoilsValueAddres = CreateWindowA("edit", "1", WS_VISIBLE | WS_CHILD | WS_BORDER | ES_NUMBER, 450, 30, 120, 20, hWnd, (HMENU)ReadCoilsValueAddresEDIT, NULL, NULL);
+	CreateWindowA("static", "Адрес:", WS_VISIBLE | WS_CHILD, 400, 30, 50, 30, hWnd, NULL, NULL, NULL);
+	ReadCoilsValueCount = CreateWindowA("edit", "8", WS_VISIBLE | WS_CHILD | WS_BORDER | ES_NUMBER, 450, 55, 120, 20, hWnd, (HMENU)ReadCoilsValueCountEDIT, NULL, NULL);
+	CreateWindowA("static", "Количество:", WS_VISIBLE | WS_CHILD, 363, 55, 84, 30, hWnd, NULL, NULL, NULL);
+	addReadCoilsButton = CreateWindowA("button", "Отправить!", WS_VISIBLE | WS_CHILD, 450, 85, 129, 20, hWnd, (HMENU)OnClickedReadCoils, NULL, NULL);
+}
+
+void readHoldingRegisters(HWND hWnd) {
+
+	//HWND readHoldingRegistersAddres;
+	//HWND readHoldingRegistersCount;
+	//HWND readHoldingRegistersButton;
+
+	CreateWindowA("static", "Read Holding Registers(x03)", WS_VISIBLE | WS_CHILD, 450, 150, 125, 32, hWnd, NULL, NULL, NULL);
+	readHoldingRegistersAddres = CreateWindowA("edit", "1", WS_VISIBLE | WS_CHILD | WS_BORDER | ES_NUMBER, 450, 187, 120, 20, hWnd, (HMENU)readHoldingRegistersAddresEDIT, NULL, NULL);
+	CreateWindowA("static", "Адрес:", WS_VISIBLE | WS_CHILD, 400, 187, 50, 30, hWnd, NULL, NULL, NULL);
+	readHoldingRegistersCount = CreateWindowA("edit", "8", WS_VISIBLE | WS_CHILD | WS_BORDER | ES_NUMBER, 450, 212, 120, 20, hWnd, (HMENU)readHoldingRegistersAddresEDIT, NULL, NULL);
+	CreateWindowA("static", "Количество:", WS_VISIBLE | WS_CHILD, 363, 212, 84, 30, hWnd, NULL, NULL, NULL);
+	readHoldingRegistersButton = CreateWindowA("button", "Отправить!", WS_VISIBLE | WS_CHILD, 450, 212+30, 129, 20, hWnd, (HMENU)onClickedreadHoldingRegistersButton, NULL, NULL);
+}
+
+std::string vectorBoolToCoilsString(const std::vector<bool>& vec) {
+	std::string result;
+
+	for (size_t i = 0; i < vec.size(); ++i) {
+		result += "coil[" + std::to_string(i) + "] = " + (vec[i] ? "1" : "0");
+		if (i < vec.size() - 1) {
+			result += "; \r\n";
+		}
+	}
+
+	return result;
 }

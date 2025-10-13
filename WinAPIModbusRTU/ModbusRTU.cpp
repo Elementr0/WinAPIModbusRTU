@@ -266,26 +266,55 @@ bool ModbusRTU::parseWriteResponse(const std::vector<uint8_t>& response, uint16_
     return true;
 }
 
+//bool ModbusRTU::parseReadCoilsResponse(const std::vector<uint8_t>& response, std::vector<bool>& coils) {
+//    if (response.size() < 4) return false;
+//
+//    if (response[1] != 0x01) return false;
+//
+//    uint8_t byteCount = response[2];
+//    if (response.size() != 3 + byteCount + 2) return false;
+//
+//    if (!verifyCRC(response)) return false;
+//
+//    coils.clear();
+//    for (int i = 0; i < byteCount; i++) {
+//        uint8_t byte = response[3 + i];
+//        for (int bit = 0; bit < 8; bit++) {
+//            coils.push_back((byte >> bit) & 0x01);
+//        }
+//    }
+//
+//    return true;
+//}
 bool ModbusRTU::parseReadCoilsResponse(const std::vector<uint8_t>& response, std::vector<bool>& coils) {
-    if (response.size() < 4) return false;
+    // Минимальный размер: адрес(1) + функция(1) + счетчик байт(1) + данные(1) + CRC(2) = 6
+    if (response.size() < 6) return false;
 
+    // Проверка функции (должна быть 0x01)
     if (response[1] != 0x01) return false;
 
     uint8_t byteCount = response[2];
+
+    // Проверка размера: адрес(1) + функция(1) + счетчик байт(1) + данные(byteCount) + CRC(2)
     if (response.size() != 3 + byteCount + 2) return false;
 
+    // Проверка CRC (должна быть последними 2 байтами)
     if (!verifyCRC(response)) return false;
 
     coils.clear();
+
+    // Извлекаем биты в правильном порядке (LSB first для Modbus)
     for (int i = 0; i < byteCount; i++) {
         uint8_t byte = response[3 + i];
         for (int bit = 0; bit < 8; bit++) {
+            // Извлекаем биты от младшего к старшему (стандарт Modbus)
             coils.push_back((byte >> bit) & 0x01);
         }
     }
 
     return true;
 }
+
 
 bool ModbusRTU::verifyCRC(const std::vector<uint8_t>& data) {
     if (data.size() < 2) return false;

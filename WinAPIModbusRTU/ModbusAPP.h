@@ -23,6 +23,13 @@
 #define TextBufferSize 4096
 #define ID_SLAVE_EDIT 1377
 
+#define OnClickedReadCoils 10
+#define ReadCoilsValueAddresEDIT 11
+#define ReadCoilsValueCountEDIT 12
+
+#define readHoldingRegistersAddresEDIT 13
+#define readHoldingRegistersCountEDIT 14
+#define onClickedreadHoldingRegistersButton 15
 
 #include<string>
 #include<vector>
@@ -39,7 +46,8 @@ HWND  hCombobox;
 HMENU ComPortSubMenu;
 HMENU ComPortListMenu;
 
-
+int addres;
+int count;
 int selectComboBoxIndex =-1;
 int lineCount;
 int selectPort = 1;
@@ -72,6 +80,14 @@ HWND connectButton;
 HWND disconnectButton;
 HWND SlaveIDEdit;
 
+HWND ReadCoilsValueAddres;
+HWND ReadCoilsValueCount;
+HWND addReadCoilsButton;
+
+HWND readHoldingRegistersAddres;
+HWND readHoldingRegistersCount;
+HWND readHoldingRegistersButton;
+
 UINT SlaveId;
 
 HWND SelecPortLable;
@@ -96,3 +112,6 @@ int IdndexComboxTobaudRate(int index);
 std::string test();
 void test2();
 void CreateGring(HWND hWnd);
+void addReadCoils(HWND hWnd);
+std::string vectorBoolToCoilsString(const std::vector<bool>& vec);
+void readHoldingRegisters(HWND hWnd);
