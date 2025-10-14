@@ -31,6 +31,16 @@
 #define readHoldingRegistersCountEDIT 14
 #define onClickedreadHoldingRegistersButton 15
 
+#define onClickedwriteSingleCoilButtonTrue 16
+#define onClickedwriteSingleCoilButtonFalse 17
+#define writeSingleCoilAddresEDIT 18
+
+
+#define writeSingleRegisterAddresEDIT 19
+#define writeSingleRegisterValueEDIT 20
+#define onClickedwriteSingleRegisterButton 21
+
+
 #include<string>
 #include<vector>
 
@@ -38,6 +48,12 @@
 #include"ModbusRTU.h"
 #include <chrono>
 #include <ctime>
+
+
+std::vector<uint8_t>request{ 0 };
+std::vector<uint8_t> response{ 0 };
+std::vector<bool> coils{ 0 };
+std::vector<uint16_t> registers{0};
 
 char Buffer[TextBufferSize];
 std::vector<uint8_t> data;
@@ -48,6 +64,7 @@ HMENU ComPortListMenu;
 
 int addres;
 int count;
+int value;
 int selectComboBoxIndex =-1;
 int lineCount;
 int selectPort = 1;
@@ -88,6 +105,15 @@ HWND readHoldingRegistersAddres;
 HWND readHoldingRegistersCount;
 HWND readHoldingRegistersButton;
 
+HWND writeSingleCoilAddres;
+HWND writeSingleCoilButtonTrue;
+HWND writeSingleCoilButtonFalse;
+
+HWND writeSingleRegisterAddres;
+HWND writeSingleRegisterValue;
+HWND writeSingleRegisterButton;
+
+
 UINT SlaveId;
 
 HWND SelecPortLable;
@@ -115,3 +141,6 @@ void CreateGring(HWND hWnd);
 void addReadCoils(HWND hWnd);
 std::string vectorBoolToCoilsString(const std::vector<bool>& vec);
 void readHoldingRegisters(HWND hWnd);
+void addTildaToConsole();
+void writeSingleCoil(HWND hWnd);
+void writeSingleRegister(HWND hWnd);

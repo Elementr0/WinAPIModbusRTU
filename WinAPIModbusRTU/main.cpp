@@ -82,6 +82,18 @@ LRESULT CALLBACK  SoftwareMainPRocedure(HWND hWnd, UINT msg, WPARAM wp, LPARAM l
 			EnableWindow(ReadCoilsValueCount, TRUE);
 			EnableWindow(addReadCoilsButton, TRUE);
 
+			EnableWindow(readHoldingRegistersAddres, TRUE);
+			EnableWindow(readHoldingRegistersCount, TRUE);
+			EnableWindow(readHoldingRegistersButton, TRUE);
+
+			EnableWindow(writeSingleRegisterAddres, TRUE);
+			EnableWindow(writeSingleRegisterValue, TRUE);
+			EnableWindow(writeSingleRegisterButton, TRUE);
+
+			EnableWindow(writeSingleCoilAddres, TRUE);
+			EnableWindow(writeSingleCoilButtonTrue, TRUE);
+			EnableWindow(writeSingleCoilButtonFalse, TRUE);
+
 			break;
 		}
 		case OnClickedDisconnect:
@@ -98,6 +110,20 @@ LRESULT CALLBACK  SoftwareMainPRocedure(HWND hWnd, UINT msg, WPARAM wp, LPARAM l
 			EnableWindow(ReadCoilsValueCount, FALSE);
 			EnableWindow(addReadCoilsButton, FALSE);
 
+			EnableWindow(readHoldingRegistersAddres, FALSE);
+			EnableWindow(readHoldingRegistersCount, FALSE);
+			EnableWindow(readHoldingRegistersButton, FALSE);
+
+			EnableWindow(writeSingleRegisterAddres, FALSE);
+			EnableWindow(writeSingleRegisterValue, FALSE);
+			EnableWindow(writeSingleRegisterButton, FALSE);
+
+			EnableWindow(writeSingleCoilAddres, FALSE);
+			EnableWindow(writeSingleCoilButtonTrue, FALSE);
+			EnableWindow(writeSingleCoilButtonFalse, FALSE);
+			//HWND writeSingleRegisterAddres;
+//HWND writeSingleRegisterValue;
+//HWND writeSingleRegisterButton;
 
 			break;
 
@@ -109,26 +135,113 @@ LRESULT CALLBACK  SoftwareMainPRocedure(HWND hWnd, UINT msg, WPARAM wp, LPARAM l
 				addLineToConsole(str);
 				addHRToConsole();
 			}
-			test2();
 
 			int ts;
 			break;
 
+		case onClickedreadHoldingRegistersButton:
+
+
+//#define readHoldingRegistersAddresEDIT 13
+//#define readHoldingRegistersCountEDIT 14
+//#define onClickedreadHoldingRegistersButton 15
+
+			addLineToConsole("Функция Read Holding Registers(x03)");
+			addres = GetDlgItemInt(hWnd, readHoldingRegistersAddresEDIT,NULL, false);
+			count =  GetDlgItemInt(hWnd, readHoldingRegistersCountEDIT, NULL, false);
+			request = ModbusRTU::createReadRequest(SlaveId, addres, count);
+			addLineToConsole("Запрос: [" + ModbusRTU::toHexString(request) + " ]");
+			if (!modbus.query(request, response, 1000)) { addLineToConsole("Ошибка чтения");  addHRToConsole(); break; };
+			addLineToConsole("Ответ: [" + ModbusRTU::toHexString(response) + " ]");
+			coils = { 0 };
+			registers;
+			modbus.parseReadResponse(response, registers);
+
+			addTildaToConsole();
+			addLineToConsole("Расшифровка:");
+			str = "Регистры:";
+			for (auto reg : registers) {
+				str += " " + std::to_string(reg);
+			}
+			addLineToConsole(str);
+			addHRToConsole();
+
+			break;
+
+		case onClickedwriteSingleCoilButtonTrue:
+			addLineToConsole("Функция Write Single Coil(x05)");
+			addres = GetDlgItemInt(hWnd, writeSingleCoilAddresEDIT, NULL, false) ;
+			request = ModbusRTU::createWriteSingleCoil(SlaveId, addres, true);
+			addLineToConsole("Запрос: [" + ModbusRTU::toHexString(request) + " ]");
+			if (!modbus.query(request, response, 1000)) { addLineToConsole("Ошибка чтения");  addHRToConsole(); break; };
+			addLineToConsole("Ответ: [" + ModbusRTU::toHexString(response) + " ]");
+			addLineToConsole("Значение записанно!");
+			addHRToConsole();
+			
+
+
+			break;
+
+		case onClickedwriteSingleCoilButtonFalse:
+			addLineToConsole("Функция Write Single Coil(x05)");
+			addres = GetDlgItemInt(hWnd, writeSingleCoilAddresEDIT, NULL, false) ;
+			request = ModbusRTU::createWriteSingleCoil(SlaveId, addres, false);
+			addLineToConsole("Запрос: [" + ModbusRTU::toHexString(request) + " ]");
+			if (!modbus.query(request, response, 1000)) { addLineToConsole("Ошибка чтения");  addHRToConsole(); break; };
+			addLineToConsole("Ответ: [" + ModbusRTU::toHexString(response) + " ]");
+			addLineToConsole("Значение записанно!");
+			addHRToConsole();
+			break;
+
 		case OnClickedReadCoils:
 			addLineToConsole("Функция ReadCoils 0x01");
-			addres = GetDlgItemInt(hWnd, ReadCoilsValueAddresEDIT, NULL, false);
+			addres = GetDlgItemInt(hWnd, ReadCoilsValueAddresEDIT, NULL, false) ;
 			count = GetDlgItemInt(hWnd, ReadCoilsValueCountEDIT, NULL, false);
-			auto request = ModbusRTU::createReadCoils(SlaveId, addres, count);
+			request = ModbusRTU::createReadCoils(SlaveId, addres, count);
 			addLineToConsole("Запрос: [" + ModbusRTU::toHexString(request) + " ]");
-			std::vector<uint8_t> response{0};
 			if (!modbus.query(request, response, 1000)) { addLineToConsole("Ошибка чтения");  addHRToConsole(); break;};
 			addLineToConsole("Ответ: [" + ModbusRTU::toHexString(response) + " ]");
-			std::vector<bool> coils{ 0 };
+			coils={ 0 };
 			ModbusRTU::parseReadCoilsResponse(response, coils);
-
+			addTildaToConsole();
 			addLineToConsole("Расшифровка:");
+			
 			addLineToConsole(vectorBoolToCoilsString(coils));
 			addHRToConsole();
+			addres = 0;
+			count = 0;
+			request = { 0 };
+			response = { 0 };
+
+			break;
+
+		case onClickedwriteSingleRegisterButton:
+
+			//HWND writeSingleRegisterAddres;
+			//HWND writeSingleRegisterValue;
+			//HWND writeSingleRegisterButton;
+			//
+			//#define writeSingleRegisterAddresEDIT 19
+			//#define writeSingleRegisterValueEDIT 20
+			//#define onClickedwriteSingleRegisterButton 21
+
+			addLineToConsole("Функция Write Single Register 0x06");
+			addres = GetDlgItemInt(hWnd, writeSingleRegisterAddresEDIT, NULL, false);
+			value = GetDlgItemInt(hWnd, writeSingleRegisterValueEDIT, NULL, false);
+			request = ModbusRTU::createWriteSingleRegister(SlaveId, addres, value);
+			addLineToConsole("Запрос: [" + ModbusRTU::toHexString(request) + " ]");
+			if (!modbus.query(request, response, 1000)) { addLineToConsole("Ошибка чтения");  addHRToConsole(); break; };
+			addLineToConsole("Ответ: [" + ModbusRTU::toHexString(response) + " ]");
+			uint16_t uintAddres = static_cast<uint16_t>(addres);
+			uint16_t uintValue = static_cast<uint16_t>(value);
+			if (ModbusRTU::parseWriteResponse(response, uintAddres, uintValue)) {
+				addLineToConsole("Регистры записанны!");
+			}
+			else {
+				addLineToConsole("Регистры не записанны!");
+			}
+			addHRToConsole();
+
 			break;
 
 		}
@@ -143,6 +256,26 @@ LRESULT CALLBACK  SoftwareMainPRocedure(HWND hWnd, UINT msg, WPARAM wp, LPARAM l
 		EnableWindow(ReadCoilsValueAddres, FALSE);
 		EnableWindow(ReadCoilsValueCount, FALSE);
 		EnableWindow(addReadCoilsButton, FALSE);
+
+		//HWND readHoldingRegistersAddres;
+		//HWND readHoldingRegistersCount;
+		//HWND readHoldingRegistersButton;
+
+		//HWND writeSingleCoilAddres;
+		//HWND writeSingleCoilButtonTrue;
+		//HWND writeSingleCoilButtonFalse;
+
+		EnableWindow(readHoldingRegistersAddres, FALSE);
+		EnableWindow(readHoldingRegistersCount, FALSE);
+		EnableWindow(readHoldingRegistersButton, FALSE);
+
+		EnableWindow(writeSingleRegisterAddres, FALSE);
+		EnableWindow(writeSingleRegisterValue, FALSE);
+		EnableWindow(writeSingleRegisterButton, FALSE);
+
+		EnableWindow(writeSingleCoilAddres, FALSE);
+		EnableWindow(writeSingleCoilButtonTrue, FALSE);
+		EnableWindow(writeSingleCoilButtonFalse, FALSE);
 
 		SerialUpdate();
 		break;
@@ -203,12 +336,12 @@ void MainWndAddWidgets(HWND hWnd) {
 
 	/*Console = CreateWindowA("static", "", WS_VISIBLE | WS_CHILD | WS_BORDER | WS_VSCROLL, 5, 200, 574, 241-5, hWnd, (HMENU)ConsoleText, NULL, NULL);*/
 	Console = CreateWindowA("edit", "", WS_VISIBLE | WS_CHILD | WS_BORDER | ES_MULTILINE | ES_READONLY | WS_VSCROLL | ES_AUTOVSCROLL, 5, 498, 1190, 241 - 5, hWnd, (HMENU)ConsoleText, NULL, NULL);
-	WriteToConsoleEDIT = CreateWindowA("edit", "", WS_VISIBLE | WS_CHILD | WS_BORDER, 5, 498 - 5 -20, 1190, 20,hWnd, NULL, NULL, NULL);
+	//WriteToConsoleEDIT = CreateWindowA("edit", "", WS_VISIBLE | WS_CHILD | WS_BORDER, 5, 498 - 5 -20, 1190, 20,hWnd, NULL, NULL, NULL);
 
-	CreateWindowA("button", "Отправить!", WS_VISIBLE | WS_CHILD, 205, 138, 100, 20, hWnd, (HMENU)OnClickedSand, NULL, NULL);
+	//CreateWindowA("button", "Отправить!", WS_VISIBLE | WS_CHILD, 205, 138, 100, 20, hWnd, (HMENU)OnClickedSand, NULL, NULL);
 
 
-
+	writeSingleCoil(hWnd);
 	std::string selectPortStr = "COM" + std::to_string(selectPort);
 	SelecPortLable = CreateWindowA("static", selectPortStr.c_str(), WS_VISIBLE | WS_CHILD, 125, 35, 45, 30, hWnd, NULL, NULL, NULL);
 	CreateWindowA("static", "|  Скорость:", WS_VISIBLE | WS_CHILD, 170, 35, 200, 30, hWnd, NULL, NULL, NULL);
@@ -218,6 +351,8 @@ void MainWndAddWidgets(HWND hWnd) {
 	CreateCombobox(hWnd);
 
 	readHoldingRegisters(hWnd);
+
+	writeSingleRegister(hWnd);
 
 	//CreateGring(hWnd);
 	
@@ -323,6 +458,10 @@ void addHRToConsole() {
 	addLineToConsole1(std::string(292, '-'));
 }
 
+void addTildaToConsole() {
+	addLineToConsole1(std::string(233, '~'));
+}
+
 int IdndexComboxTobaudRate(int index) {
 	switch (index) {
 	case 0:
@@ -381,39 +520,6 @@ std::string test() {
 }
 
 
-void test2() {
-	auto request = ModbusRTU::createWriteSingleRegister(1, 5, 1234);
-
-
-	addLineToConsole("Функция createReadRequest(1, 1, 1)");
-	request = ModbusRTU::createReadRequest(1, 1, 1);
-	addLineToConsole(ModbusRTU::toHexString(request));
-
-	addHRToConsole();
-
-	addLineToConsole("Функция createWriteSingleCoil(1, 3, true)");
-	request = ModbusRTU::createWriteSingleCoil(1, 3, true);
-	addLineToConsole(ModbusRTU::toHexString(request));
-
-	addHRToConsole();
-
-	addLineToConsole("Функция createWriteSingleRegister(1, 5, 1234)");
-	request = ModbusRTU::createWriteSingleRegister(1, 5, 1234);
-	addLineToConsole(ModbusRTU::toHexString(request));
-
-	addHRToConsole();
-
-
-
-	std::vector<uint16_t> values = { 100, 200, 300, 400 };
-	addLineToConsole("Функция createWriteMultipleRegisters(1, 10, values)");
-	request = ModbusRTU::createWriteMultipleRegisters(1, 10, values);
-	addLineToConsole(ModbusRTU::toHexString(request));
-
-	addHRToConsole();
-
-
-}
 
 void CreateGring(HWND hWnd) {
 	CreateWindowA("static", "x0", WS_VISIBLE | WS_CHILD, 0, 0, 25, 20, hWnd, NULL, NULL, NULL);
@@ -462,7 +568,7 @@ void readHoldingRegisters(HWND hWnd) {
 	CreateWindowA("static", "Read Holding Registers(x03)", WS_VISIBLE | WS_CHILD, 450, 150, 125, 32, hWnd, NULL, NULL, NULL);
 	readHoldingRegistersAddres = CreateWindowA("edit", "1", WS_VISIBLE | WS_CHILD | WS_BORDER | ES_NUMBER, 450, 187, 120, 20, hWnd, (HMENU)readHoldingRegistersAddresEDIT, NULL, NULL);
 	CreateWindowA("static", "Адрес:", WS_VISIBLE | WS_CHILD, 400, 187, 50, 30, hWnd, NULL, NULL, NULL);
-	readHoldingRegistersCount = CreateWindowA("edit", "8", WS_VISIBLE | WS_CHILD | WS_BORDER | ES_NUMBER, 450, 212, 120, 20, hWnd, (HMENU)readHoldingRegistersAddresEDIT, NULL, NULL);
+	readHoldingRegistersCount = CreateWindowA("edit", "8", WS_VISIBLE | WS_CHILD | WS_BORDER | ES_NUMBER, 450, 212, 120, 20, hWnd, (HMENU)readHoldingRegistersCountEDIT, NULL, NULL);
 	CreateWindowA("static", "Количество:", WS_VISIBLE | WS_CHILD, 363, 212, 84, 30, hWnd, NULL, NULL, NULL);
 	readHoldingRegistersButton = CreateWindowA("button", "Отправить!", WS_VISIBLE | WS_CHILD, 450, 212+30, 129, 20, hWnd, (HMENU)onClickedreadHoldingRegistersButton, NULL, NULL);
 }
@@ -471,11 +577,41 @@ std::string vectorBoolToCoilsString(const std::vector<bool>& vec) {
 	std::string result;
 
 	for (size_t i = 0; i < vec.size(); ++i) {
-		result += "coil[" + std::to_string(i) + "] = " + (vec[i] ? "1" : "0");
+		result += "coil[" + std::to_string(i+1) + "] = " + (vec[i] ? "1" : "0");
 		if (i < vec.size() - 1) {
 			result += "; \r\n";
 		}
 	}
 
 	return result;
+}
+
+void writeSingleCoil(HWND hWnd) {
+	//HWND writeSingleCoilAddres;
+	//HWND writeSingleCoilButtonTrue;
+	//HWND writeSingleCoilButtonFalse;
+
+	CreateWindowA("static", "Write Single Coil(x05)", WS_VISIBLE | WS_CHILD, 700, 0, 160, 30, hWnd, NULL, NULL, NULL);
+	writeSingleCoilAddres = CreateWindowA("edit", "1", WS_VISIBLE | WS_CHILD | WS_BORDER | ES_NUMBER, 700, 30, 120, 20, hWnd, (HMENU)writeSingleCoilAddresEDIT, NULL, NULL);
+	writeSingleCoilButtonTrue = CreateWindowA("button", "Вкл.", WS_VISIBLE | WS_CHILD, 700, 55, 50, 21, hWnd, (HMENU)onClickedwriteSingleCoilButtonTrue, NULL, NULL);
+	writeSingleCoilButtonFalse = CreateWindowA("button", "Выкл.", WS_VISIBLE | WS_CHILD, 769, 55, 51, 20, hWnd, (HMENU)onClickedwriteSingleCoilButtonFalse, NULL, NULL);
+
+
+}
+
+//HWND writeSingleRegisterAddres;
+//HWND writeSingleRegisterValue;
+//HWND writeSingleRegisterButton;
+//
+//#define writeSingleRegisterAddresEDIT 19
+//#define writeSingleRegisterValueEDIT 20
+//#define onClickedwriteSingleRegisterButton 21
+
+void writeSingleRegister(HWND hWnd) {
+	CreateWindowA("static", "Write Single Register(x06)", WS_VISIBLE | WS_CHILD, 700, 150, 160, 32, hWnd, NULL, NULL, NULL);
+	writeSingleRegisterAddres = CreateWindowA("edit", "1", WS_VISIBLE | WS_CHILD | WS_BORDER | ES_NUMBER, 700, 187, 120, 20, hWnd, (HMENU)writeSingleRegisterAddresEDIT, NULL, NULL);
+	CreateWindowA("static", "Адрес:", WS_VISIBLE | WS_CHILD, 650, 187, 50, 30, hWnd, NULL, NULL, NULL);
+	writeSingleRegisterValue = CreateWindowA("edit", "110", WS_VISIBLE | WS_CHILD | WS_BORDER | ES_NUMBER, 700, 212, 120, 20, hWnd, (HMENU)writeSingleRegisterValueEDIT, NULL, NULL);
+	CreateWindowA("static", "Значение:", WS_VISIBLE | WS_CHILD, 637-10-2, 212, 80-5-1, 30, hWnd, NULL, NULL, NULL);
+	writeSingleRegisterButton = CreateWindowA("button", "Отправить!", WS_VISIBLE | WS_CHILD, 700, 212 + 30, 129, 20, hWnd, (HMENU)onClickedwriteSingleRegisterButton, NULL, NULL);
 }
