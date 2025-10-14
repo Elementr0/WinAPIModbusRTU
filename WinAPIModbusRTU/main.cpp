@@ -13,7 +13,7 @@ int WINAPI WinMain(HINSTANCE hInst, HINSTANCE hPrevInst, LPSTR args, int ncmdsho
 	if (!RegisterClassW(&SoftwareMainClass)) { return -1; }
 
 	MSG msg = { 0 };
-	CreateWindow(L"MainWndClass", L"ModbusRTU", WS_OVERLAPPEDWINDOW | WS_VISIBLE, 0, 0, WindowWidth, WindowHeight, NULL, NULL, NULL, NULL);
+	CreateWindow(L"MainWndClass", L"ModbusRTU", WS_OVERLAPPEDWINDOW & ~WS_THICKFRAME & ~WS_MAXIMIZEBOX | WS_VISIBLE, 0, 0, WindowWidth, WindowHeight, NULL, NULL, NULL, NULL);
 
 	while (GetMessage(&msg, NULL, NULL, NULL)) { 
 		TranslateMessage(&msg);
@@ -214,6 +214,12 @@ LRESULT CALLBACK  SoftwareMainPRocedure(HWND hWnd, UINT msg, WPARAM wp, LPARAM l
 			response = { 0 };
 
 			break;
+		case 22:
+			
+			SlaveId = GetDlgItemInt(hWnd, ID_SLAVE_EDIT, NULL, false);
+			addLineToConsole("SlaveID: " + std::to_string(SlaveId));
+			addHRToConsole();
+			break;
 
 		case onClickedwriteSingleRegisterButton:
 
@@ -243,7 +249,6 @@ LRESULT CALLBACK  SoftwareMainPRocedure(HWND hWnd, UINT msg, WPARAM wp, LPARAM l
 			addHRToConsole();
 
 			break;
-
 		}
 		break;
 	case WM_CREATE:
@@ -331,6 +336,7 @@ void MainWndAddWidgets(HWND hWnd) {
 
 
 	SlaveIDEdit = CreateWindowA("edit", "1", WS_VISIBLE | WS_CHILD | WS_BORDER | ES_NUMBER, 64, 138, 120, 20, hWnd, (HMENU)ID_SLAVE_EDIT, NULL, NULL);
+	ID_SLAVE_Button = CreateWindowA("button", "Задать", WS_VISIBLE | WS_CHILD , 64+120+5, 138, 120, 20, hWnd, (HMENU)22, NULL, NULL);
 
 
 

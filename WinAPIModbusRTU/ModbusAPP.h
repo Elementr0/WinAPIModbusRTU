@@ -39,6 +39,9 @@
 #define writeSingleRegisterAddresEDIT 19
 #define writeSingleRegisterValueEDIT 20
 #define onClickedwriteSingleRegisterButton 21
+#define SLAVEID_BUTTON 22;
+
+HWND ID_SLAVE_Button;
 
 
 #include<string>
